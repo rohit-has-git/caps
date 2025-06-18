@@ -13,8 +13,7 @@ metadata:
 spec:
   ingressClassName: alb
   rules:
-    - host: codebyrohit.skillwithrohit.shop
-      http:
+    - http:
         paths:
           - path: /ok
             pathType: Prefix
