@@ -4,61 +4,52 @@ env:
   variables:
     ACCOUNT_ID: 026090545815
     Region: us-east-1
-    Frontend_Repo: projectfornt
+    Frontend_Repo: projectfront
     Backend_Repo: projectback
     Frontend_Dir: Application-Code/frontend
     Backend_Dir: Application-Code/backend
-    k8s_Maifiest_Dir: Kubernetes-Manifests-file
+    K8S_MANIFEST_DIR: Kubernetes-Manifests-file
 
 phases:
   install:
     runtime-versions:
       nodejs: 18
     commands:
-      - echo installing utilities
-        yum install -y jq
+      - echo "Installing utilities"
+      - yum install -y jq
 
   pre_build:
     commands:
       - export IMAGE_TAG=v1.${CODEBUILD_BUILD_NUMBER}
-      - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 026090545815.dkr.ecr.us-east-1.amazonaws.com
-      - echo Installing frontend and backend dependencies...
-      - cd $Frontend_Dir && npm install cd -
-      - cd $Backend_Dir && npm install cd -
-
-
+      - echo "Logging into ECR..."
+      - aws ecr get-login-password --region $Region | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com
+      - echo "Installing frontend dependencies..."
+      - cd $Frontend_Dir && npm install && cd -
+      - echo "Installing backend dependencies..."
+      - cd $Backend_Dir && npm install && cd -
 
   build:
     commands:
-      - echo Building docker images.....
+      - echo "Building Docker images..."
       - docker build -t $Frontend_Repo:$IMAGE_TAG $Frontend_Dir
       - docker tag $Frontend_Repo:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Frontend_Repo:$IMAGE_TAG
       - docker build -t $Backend_Repo:$IMAGE_TAG $Backend_Dir
       - docker tag $Backend_Repo:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Backend_Repo:$IMAGE_TAG
 
-
   post_build:
     commands:
-      - echo Pushing images to ECR
+      - echo "Pushing images to ECR..."
       - docker push $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Frontend_Repo:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Backend_Repo:$IMAGE_TAG
-
       - mkdir -p k8s
-
-      - echo Preparing Kubernetes manifest output directory...
-      - sed s"|IMAGE_PLACEHOLDER|$ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Frontend_Repo:$IMAGE_TAG|g" $k8s_Maifiest_Dir/Frontend/deployment.yaml > k8s/frontend-deployment.yaml
-      - cp $k8s_Maifiest_Dir/Frontend/service.yaml k8s/frontend-service.yaml
-
-      - sed "s|IMAGE_PLACEHOLDER|$ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Backend_Repo:$IMAGE_TAG|g" $Backend_Dir/deployment.yaml > k8s/backend-deployment.yaml
-      - cp $Backend_Dir/service.yaml k8s/backend-service.yaml
-
-      - cp $K8S_MANIFEST_DIR/Database/deployment.yaml k8s/database-deployment.yaml || true
-      - cp $K8S_MANIFEST_DIR/Database/service.yaml k8s/database-service.yaml || true
-      - cp $K8S_MANIFEST_DIR/Database/secrets.yaml k8s/database-secrets.yaml || true
-
-      - cp $K8S_MANIFEST_DIR/ingress.yaml k8s/ingress.yaml || true
-      
-      - echo "Final list of generated Kubernetes YAML files:"
+      - echo "Generating Kubernetes manifests..."
+      - sed "s|IMAGE_PLACEHOLDER|$ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Frontend_Repo:$IMAGE_TAG|g" $K8S_MANIFEST_DIR/Frontend/deployment.yaml > k8s/frontend-deployment.yaml
+      - cp $K8S_MANIFEST_DIR/Frontend/service.yaml k8s/
+      - sed "s|IMAGE_PLACEHOLDER|$ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Backend_Repo:$IMAGE_TAG|g" $K8S_MANIFEST_DIR/Backend/deployment.yaml > k8s/backend-deployment.yaml
+      - cp $K8S_MANIFEST_DIR/Backend/service.yaml k8s/
+      - cp $K8S_MANIFEST_DIR/Database/*.yaml k8s/ || true
+      - cp $K8S_MANIFEST_DIR/ingress.yaml k8s/ || true
+      - echo "Final Kubernetes YAMLs:"
       - find k8s/
 
 artifacts:
