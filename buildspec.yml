@@ -12,13 +12,13 @@ env:
 
 phases:
   install:
-    runtime-version:
+    runtime-versions:
       nodejs: 18
     commands:
       - echo installing utilities
         yum install -y jq
 
-  prebuild:
+  pre_build:
     commnands:
       - export IMAGE_TAG=v1.${CODEBUILD_BUILD_NUMBER}
       - aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 026090545815.dkr.ecr.us-east-1.amazonaws.com
@@ -37,7 +37,7 @@ phases:
       - docker tag $Backend_Repo:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Backend_Repo:$IMAGE_TAG
 
 
-  postbuild:
+  post_build:
     commands:
       - echo Pushing images to ECR
       - docket push $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Frontend_Repo:$IMAGE_TAG
