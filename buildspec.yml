@@ -4,7 +4,7 @@ env:
   variables:
     ACCOUNT_ID: 026090545815
     Region: us-east-1
-    Frontend_Repo: projectfront
+    Frontend_Repo: projectfornt
     Backend_Repo: projectback
     Frontend_Dir: Application-Code/frontend
     Backend_Dir: Application-Code/backend
