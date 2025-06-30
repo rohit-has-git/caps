@@ -31,16 +31,16 @@ phases:
   build:
     commands:
       - echo Building docker images.....
-      - docker build -t $Frontend_Repo:$IMAGE_TAG $Frontend_Dir .
+      - docker build -t $Frontend_Repo:$IMAGE_TAG $Frontend_Dir
       - docker tag $Frontend_Repo:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Frontend_Repo:$IMAGE_TAG
-      - docker build -t $Backend_Repo:$IMAGE_TAG $Backend_Dir .
+      - docker build -t $Backend_Repo:$IMAGE_TAG $Backend_Dir
       - docker tag $Backend_Repo:$IMAGE_TAG $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Backend_Repo:$IMAGE_TAG
 
 
   post_build:
     commands:
       - echo Pushing images to ECR
-      - docket push $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Frontend_Repo:$IMAGE_TAG
+      - docker push $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Frontend_Repo:$IMAGE_TAG
       - docker push $ACCOUNT_ID.dkr.ecr.$Region.amazonaws.com/$Backend_Repo:$IMAGE_TAG
 
       - mkdir -p k8s
